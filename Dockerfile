@@ -38,4 +38,4 @@ EXPOSE 8931
 
 # Set the entrypoint with all required flags, bind to all interfaces for remote access
 # Use --allowed-hosts '*' to accept connections from any host (required for Dokploy/Traefik)
-ENTRYPOINT ["npx", "@playwright/mcp", "--headless", "--browser", "chromium", "--no-sandbox", "--port", "8931", "--host", "0.0.0.0", "--allowed-hosts", "*"]
+ENTRYPOINT ["npx", "@playwright/mcp", "--headless", "--browser", "chromium", "--no-sandbox", "--port", "8931", "--host", "0.0.0.0", "--allowed-hosts", "*", "--vision"]
