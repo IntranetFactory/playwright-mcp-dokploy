@@ -30,10 +30,6 @@ USER playwright
 # Expose the default MCP port
 EXPOSE 8931
 
-# Health check: Use the SSE endpoint which accepts simple GET requests
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:8931/sse || exit 1
-
 # Set the entrypoint with all required flags, bind to all interfaces for remote access
 # Use --allowed-hosts '*' to accept connections from any host (required for Dokploy/Traefik)
 ENTRYPOINT ["npx", "@playwright/mcp", "--headless", "--browser", "chromium", "--no-sandbox", "--port", "8931", "--host", "0.0.0.0", "--allowed-hosts", "*"]
