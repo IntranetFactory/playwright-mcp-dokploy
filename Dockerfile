@@ -29,7 +29,8 @@ EXPOSE 8931
 
 # Health check: verify the MCP server is responding
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD wget -q --spider http://localhost:8931/mcp || exit 1
+  CMD wget -q --spider http://0.0.0.0:8931/mcp || exit 1
 
 # Set the entrypoint with all required flags, bind to all interfaces for remote access
-ENTRYPOINT ["npx", "@playwright/mcp", "--headless", "--browser", "chromium", "--no-sandbox", "--port", "8931", "--host", "0.0.0.0"]
+# Use --allowed-hosts '*' to accept connections from any host (required for Dokploy/Traefik)
+ENTRYPOINT ["npx", "@playwright/mcp", "--headless", "--browser", "chromium", "--no-sandbox", "--port", "8931", "--host", "0.0.0.0", "--allowed-hosts", "*"]
