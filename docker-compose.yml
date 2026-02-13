@@ -1,6 +1,8 @@
 services:
   playwright-mcp:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.v0
     tty: true
     ports:
       - "8931:8931"
