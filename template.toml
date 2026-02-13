@@ -1,0 +1,18 @@
+[variables]
+main_domain = "${domain}"
+
+[[config.domains]]
+serviceName = "playwright-mcp"
+port = 8931
+host = "${main_domain}"
+
+[config.env]
+HEADLESS = "true"
+MCP_PORT = "8931"
+MCP_HOST = "0.0.0.0"
+ISOLATED = "true"
+NOSANDBOX = "true"
+VIEWPORT_SIZE = "1280,720"
+
+[config]
+mounts = []

@@ -2,25 +2,8 @@ services:
   playwright-mcp:
     build: .
     tty: true
-    environment:
-      # Server deployment: always headless
-      - HEADLESS=true
-      # Internal container port for the MCP server
-      - MCP_PORT=${MCP_PORT:-8931}
-      # Bind to 0.0.0.0 so Traefik can reach the container
-      - MCP_HOST=0.0.0.0
-      # Run in isolated mode
-      - ISOLATED=${ISOLATED:-true}
-      # Disable Chrome sandbox (required in containerized environments)
-      - NOSANDBOX=${NOSANDBOX:-true}
-      # Browser viewport size
-      - VIEWPORT_SIZE=${VIEWPORT_SIZE:-1280,720}
-    networks:
-      - dokploy-network
+    ports:
+      - 8931
     restart: unless-stopped
     # Increase shared memory for Chrome stability
     shm_size: "1gb"
-
-networks:
-  dokploy-network:
-    external: true
