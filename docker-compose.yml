@@ -1,7 +1,6 @@
 services:
   playwright-mcp:
     build: .
-    tty: true
     ports:
       - "8931:8931"
     restart: unless-stopped
