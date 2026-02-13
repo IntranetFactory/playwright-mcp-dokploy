@@ -4,5 +4,14 @@ services:
     expose:
       - "8931"
     restart: unless-stopped
-    # Increase shared memory for Chrome stability
-    shm_size: "1gb"
+    # Share host IPC namespace for Chrome stability
+    ipc: host
+    volumes:
+      # Persist screenshots, downloads, and other artifacts
+      - playwright-data:/tmp
+    environment:
+      # Set default paths for artifacts
+      - PLAYWRIGHT_ARTIFACTS_DIR=/tmp
+
+volumes:
+  playwright-data:

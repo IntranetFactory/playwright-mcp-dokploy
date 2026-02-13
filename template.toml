@@ -13,6 +13,9 @@ MCP_HOST = "0.0.0.0"
 ISOLATED = "true"
 NOSANDBOX = "true"
 VIEWPORT_SIZE = "1280,720"
+PLAYWRIGHT_ARTIFACTS_DIR = "/tmp"
 
 [config]
-mounts = []
+mounts = [
+  { type = "volume", name = "playwright-data", mountPath = "/tmp" }
+]
