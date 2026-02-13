@@ -28,5 +28,12 @@ RUN mkdir -p /home/playwright/.npm && chown -R playwright:playwright /home/playw
 # Switch to non-root user
 USER playwright
 
+# Expose the default MCP port
+EXPOSE 8931
+
+# Health check: verify the MCP server is responding
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD wget -q --spider http://localhost:${MCP_PORT:-8931}/sse || exit 1
+
 # Set the entrypoint
 ENTRYPOINT ["/app/entrypoint.sh"]

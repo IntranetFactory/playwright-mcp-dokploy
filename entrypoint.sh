@@ -17,6 +17,11 @@ if [ -n "$MCP_PORT" ]; then
   MCP_ARGS="$MCP_ARGS --port $INTERNAL_PORT"
 fi
 
+# Add --host if MCP_HOST is set (e.g. 0.0.0.0 for Dokploy/Traefik)
+if [ -n "$MCP_HOST" ]; then
+  MCP_ARGS="$MCP_ARGS --host $MCP_HOST"
+fi
+
 # Add --isolated if ISOLATED environment variable is true
 if [ "$ISOLATED" = "true" ]; then
   MCP_ARGS="$MCP_ARGS --isolated"
