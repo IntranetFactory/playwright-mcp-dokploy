@@ -8,6 +8,9 @@ WORKDIR /app
 # RUN npm cache clean --force # Try this if you encounter caching issues
 RUN npm install -g @playwright/mcp@0.0.32
 
+# Install playwright package first to avoid installation warnings
+RUN npm install -g @playwright/test
+
 # Install Chromium browser and dependencies required by Playwright
 # Although the base image should include them, explicitly install in case MCP cannot find them
 RUN npx playwright install chromium && npx playwright install-deps chromium
