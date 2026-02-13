@@ -1,9 +1,0 @@
-services:
-  playwright-mcp:
-    build: .
-    tty: true
-    ports:
-      - 8931
-    restart: unless-stopped
-    # Increase shared memory for Chrome stability
-    shm_size: "1gb"

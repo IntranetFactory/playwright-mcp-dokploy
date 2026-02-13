@@ -1,39 +1,71 @@
-# Specify the base image (check for the latest tag and specify if preferred)
-FROM mcr.microsoft.com/playwright:v1.54.2-noble
+ARG PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
-# Set working directory (optional)
+# ------------------------------
+# Base
+# ------------------------------
+# Base stage: Contains only the minimal dependencies required for runtime
+# (node_modules and Playwright system dependencies)
+FROM node:22-bookworm-slim AS base
+
+ARG PLAYWRIGHT_BROWSERS_PATH
+ENV PLAYWRIGHT_BROWSERS_PATH=${PLAYWRIGHT_BROWSERS_PATH}
+
+# Set the working directory
 WORKDIR /app
 
-# Install @playwright/mcp globally
-# RUN npm cache clean --force # Try this if you encounter caching issues
-RUN npm install -g @playwright/mcp@0.0.32
+RUN --mount=type=cache,target=/root/.npm,sharing=locked,id=npm-cache \
+    --mount=type=bind,source=package.json,target=package.json \
+    --mount=type=bind,source=package-lock.json,target=package-lock.json \
+    --mount=type=bind,source=packages/playwright-mcp/package.json,target=packages/playwright-mcp/package.json \
+  npm ci --omit=dev && \
+  # Install system dependencies for playwright
+  npx -y playwright-core install-deps chromium
 
-# Install Chrome browser and dependencies required by Playwright
-# Although the base image should include them, explicitly install in case MCP cannot find them
-RUN npx playwright install chrome && npx playwright install-deps chrome
+# ------------------------------
+# Builder
+# ------------------------------
+FROM base AS builder
 
-# Create non-root user for security with proper home directory
-RUN addgroup --system playwright && adduser --system --ingroup playwright --home /home/playwright playwright
+RUN --mount=type=cache,target=/root/.npm,sharing=locked,id=npm-cache \
+    --mount=type=bind,source=package.json,target=package.json \
+    --mount=type=bind,source=package-lock.json,target=package-lock.json \
+    --mount=type=bind,source=packages/playwright-mcp/package.json,target=packages/playwright-mcp/package.json \
+  npm ci
 
-# Copy the entrypoint script and set permissions
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# Copy the rest of the app
+COPY packages/playwright-mcp/*.json packages/playwright-mcp/*.js packages/playwright-mcp/*.ts .
 
-# Change ownership of /app to playwright user
-RUN chown -R playwright:playwright /app
+# ------------------------------
+# Browser
+# ------------------------------
+# Cache optimization:
+# - Browser is downloaded only when node_modules or Playwright system dependencies change
+# - Cache is reused when only source code changes
+FROM base AS browser
 
-# Set up npm directories for the playwright user
-RUN mkdir -p /home/playwright/.npm && chown -R playwright:playwright /home/playwright
+RUN npx -y playwright-core install --no-shell chromium
 
-# Switch to non-root user
-USER playwright
+# ------------------------------
+# Runtime
+# ------------------------------
+FROM base
 
-# Expose the default MCP port
+ARG PLAYWRIGHT_BROWSERS_PATH
+ARG USERNAME=node
+ENV NODE_ENV=production
+ENV PLAYWRIGHT_MCP_OUTPUT_DIR=/tmp/playwright-output
+
+# Set the correct ownership for the runtime user on production `node_modules`
+RUN chown -R ${USERNAME}:${USERNAME} node_modules
+
+USER ${USERNAME}
+
+COPY --from=browser --chown=${USERNAME}:${USERNAME} ${PLAYWRIGHT_BROWSERS_PATH} ${PLAYWRIGHT_BROWSERS_PATH}
+COPY --chown=${USERNAME}:${USERNAME} packages/playwright-mcp/cli.js packages/playwright-mcp/package.json ./
+
+# Expose the HTTP/SSE port
 EXPOSE 8931
 
-# Health check: verify the MCP server is responding
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD wget -q --spider http://localhost:${MCP_PORT:-8931}/sse || exit 1
-
-# Set the entrypoint
-ENTRYPOINT ["/app/entrypoint.sh"]
+# Run in headless and only with chromium (other browsers need more dependencies not included in this image)
+# ENTRYPOINT ["node", "cli.js", "--headless", "--browser", "chromium", "--no-sandbox"]
+ENTRYPOINT ["node", "cli.js", "--headless", "--browser", "chromium", "--no-sandbox", "--port", "8931"]
