@@ -11,9 +11,8 @@ RUN npm install -g @playwright/mcp@0.0.32
 # Install playwright package first to avoid installation warnings
 RUN npm install -g @playwright/test
 
-# Install Chromium browser and dependencies required by Playwright
-# Although the base image should include them, explicitly install in case MCP cannot find them
-RUN npx playwright install chromium && npx playwright install-deps chromium
+# Install system dependencies for Chromium as root (requires sudo)
+RUN npx playwright install-deps chromium
 
 # Install curl for healthcheck
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
@@ -29,6 +28,10 @@ RUN mkdir -p /home/playwright/.npm && chown -R playwright:playwright /home/playw
 
 # Switch to non-root user
 USER playwright
+
+# Install Chromium browser as the playwright user
+# This ensures the browser is accessible to the user running the MCP server
+RUN npx playwright install chromium
 
 # Expose the default MCP port
 EXPOSE 8931
